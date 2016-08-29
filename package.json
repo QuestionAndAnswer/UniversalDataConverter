@@ -1,0 +1,30 @@
+{
+  "name": "universal-data-converter.js",
+  "version": "0.0.1",
+  "description": "Library for convenience complex data manipulations and transformations.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuestionAndAnswer/universal-data-converter.js.git"
+  },
+  "keywords": [
+    "data",
+    "conversion",
+    "manipulation"
+  ],
+  "author": "Artsiom Miksiuk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/QuestionAndAnswer/universal-data-converter.js/issues"
+  },
+  "homepage": "https://github.com/QuestionAndAnswer/universal-data-converter.js#readme",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-qunit": "^1.2.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "grunt-jsdoc": "^2.1.0"
+  }
+}
