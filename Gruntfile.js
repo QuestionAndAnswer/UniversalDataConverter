@@ -14,13 +14,13 @@ module.exports = function (grunt) {
 		pkg: grunt.file.readJSON("package.json"),
 		jsdoc: {
 			dist: {
-				src: ["universal-data-converter.js"],
+				src: ["src/*.js"],
 				dest: "doc"
 			}
 		},
 		actualWatch: {
 			doc: {
-				files: ["universal-data-converter.js"],
+				files: ["src/*.js"],
 				tasks: ["jsdoc"]
 			}
 		}

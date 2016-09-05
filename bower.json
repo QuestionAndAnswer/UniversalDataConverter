@@ -1,7 +1,7 @@
 {
   "name": "universal-data-converter.js",
   "description": "Library for convenience complex data manipulations and transformations.",
-  "main": "index.js",
+  "main": "src/universal-data-converter.js",
   "authors": [
     "Artsiom Miksiuk"
   ],

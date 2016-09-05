@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset='UTF-8' />
+	<meta http-equiv='content-type' content='text/html; charset=utf-8' />
+
+	<title>jQuery.simpleFAQ QUnit Test Runner</title>
+	<link rel='stylesheet' href='../bower_components/qunit/qunit/qunit.css'>
+
+	<script src="../bower_components/jquery/dist/jquery.min.js"></script>
+	<script src='../bower_components/qunit/qunit/qunit.js'></script>
+
+	<script src='../src/universal-data-converter.js'></script>
+	<script src="../src/utils.js"></script>
+
+	<script src="utils.js"></script>
+	<script src="complex-conversion-test.js"></script>
+
+	<!-- <script type="text/javascript">
+	"use strict";
+	var oRegEx = /aaaaaaaaaa/g;
+	var sIndexOf = "aaaaaaaaaa";
+	var sString = getTestString();
+
+	function getTestString() {
+		var sString = "";
+		for(var i = 0; i < 100; i++) {
+			sString += "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+		}
+		sString += "aaaaaaaaaa";
+		return sString;
+	}
+
+	function testRegExp() {
+		var result = false;
+		for(var i = 0; i < 1000000; i++) {
+			result = oRegEx.test(sString);
+		}
+		return result;
+	}
+
+	if(testRegExp()) { console.log("RegeExp test finished"); }//to kill possible optimizations
+
+	function testIndexOf() {
+		var result = false;
+		for(var i = 0; i < 1000000; i++) {
+			result = sString.indexOf(sIndexOf) !== -1;
+		}
+		return result;
+	}
+
+	if(testIndexOf()) { console.log("IndexOf test finished"); }//to kill possible optimizations
+	</script> -->
+
+</head>
+
+<body>
+	<div id="qunit"></div>
+	<div id='qunit-fixture'></div>
+</body>
+
+</html>

@@ -1,5 +1,5 @@
-(function() {
-	var utils = {
+(function () {
+	var module = {
 		/**
 		 * Index items by key. Use this in case if keys are unique.
 		 * @prop {array} aList List of items that should be indexed
@@ -106,7 +106,7 @@
 		 * @return {string} Path part.
 		 */
 		getPathPart: function (sPath, iIndex) {
-			var aPathParts = utils.truncatePath(true, sPath);
+			var aPathParts = module.truncatePath(true, sPath);
 			return iIndex >= 0 ? aPathParts[iIndex] : aPathParts[aPathParts.length + iIndex];
 		},
 
@@ -128,11 +128,11 @@
 		 * };
 		 * getValByPath(oObject, "/a/b", -1); // { b: "a", c: 3}
 		 * getValByPath(oObject, "/a/b"); // "a"
-		 * @see test/mode/UDC.utils.js for more examples
+		 * @see test/mode/utils.js for more examples
 		 * @return {any} Value from object
 		 */
 		getValByPath: function(oObject, sPath, iFrom, iTo) {
-			var sPathParts = utils.truncatePath(true, sPath, iFrom, iTo);
+			var sPathParts = module.truncatePath(true, sPath, iFrom, iTo);
 			var oCurrentObject = oObject;
 			for(var i = 0, len = sPathParts.length; i < len; i++) {
 				oCurrentObject = oCurrentObject[sPathParts[i]];
@@ -142,56 +142,63 @@
 		},
 
 		setValByPath: function (oObject, sPath, vVal) {
-			var sPathParts = utils.truncatePath(true, sPath);
+			var sPathParts = module.truncatePath(true, sPath);
 			var oCurrentObject = oObject;
 			for(var i = 0, len = sPathParts.length - 1; i < len; i++) {
 				oCurrentObject = oCurrentObject[sPathParts[i]];
 			}
-			oCurrentObject[utils.getLast(sPathParts)] = vVal;
+			oCurrentObject[module.getLast(sPathParts)] = vVal;
 
 			return oObject;
 		},
 
 		getLast: function (aList) {
 			return aList[aList.length - 1];
-		}
-	};
-
-    var module = {
-		utils: utils,
-
-		/**
-		 * Direct conversion
-		 * @param {boolean} bExtendExisting If true, then passed object will be extended with result of conversions,
-		 * false, then new object will be created and result will be writed to this new object.
-		 * @param {string} sInPath Input path
-		 * @param {string} [sOutPath] Output path. If ommited, input path will be used
-		 * @param {object} oObject Object on which perform conversion
-		 * @param {function} fnProcessor Conversion value processor
-		 * @return {object}  Processed object
-		 */
-		direct: function () {
-			var i = 0,
-				bExtendExisting = typeof arguments[i] === "boolean" ? arguments[i++] : false,
-				sInPath = arguments[i++],
-				sOutPath = typeof arguments[i] === "string" ? arguments[i++] : sInPath,
-				oObject = arguments[i++],
-				fnProcessor = arguments[i++] || function (oItem) { return oItem; };
-
-			var vVal = utils.getValByPath(oObject, sInPath);
-			var oResultObject = bExtendExisting ? oObject : {};
-			utils.setValByPath(oResultObject, sOutPath, fnProcessor(vVal));
-			return oResultObject;
 		},
 
 		/**
-		 * Broadcast conversion
-		 * @return {object}  Processed object
+		 * Performs deep walk in object.
+		 * @method objectWalkInDeep
+		 * @memberof utils
+		 * @param  {object} oObject    Object for walking
+		 * @param  {utils~objectWalkInDeepCallback} fnCallback Walk callback
 		 */
-		broadcast: function () {
-			
+		objectWalkInDeep: function (oObject, fnCallback, sUpperPath) {
+			var aKeys, sKey, vVal, sFullPath, i, len;
+			if(jQuery.type(oObject) !== "object") {
+				return ;
+			}
+
+			if(!sUpperPath) {
+				sUpperPath = "";
+			}
+
+			aKeys = Object.keys(oObject);
+			for(i = 0, len = aKeys.length; i < len; i++) {
+				sKey = aKeys[i];
+				vVal = oObject[sKey];
+				sFullPath = sUpperPath + "/" + sKey;
+
+				module.objectWalkInDeep(vVal, fnCallback, sFullPath);
+				fnCallback(sFullPath, vVal, sKey);
+			}
+		},
+		/**
+		 * @callback utils~objectWalkInDeepCallback
+		 * @param {string} sPath Current path
+		 * @param {any} vValue Value under current path
+		 * @param {string} sKey Current key
+		 */
+
+		 /**
+		  * Wrap array into array if this value not array already.
+		  * @param  {any} vVal Value to wrap
+		  * @return {array}  Value wrapped into array
+		  */
+		wrapInArrayIfNot: function (vVal) {
+			return jQuery.isArray(vVal) ? vVal : [vVal];
 		}
 	};
 
-	window.UDC = module;
+	window.utils = module;
 })();
