@@ -9,32 +9,29 @@
 
 	/**
 	 * Converter maker
-	 * @param {object|array} vModificationConversions Conversions.
+	 * @param {array} aModificationConversions Conversions.
 	 * This conversion will modify passed object's structure. On this step
 	 * only modification under passed object is performed. All not mentioned in Conversions
 	 * pathes will be transfered to output object untouched.
-	 * @param {object|array} vExtractionConversions Conversions.
+	 * @param {array} aExtractionConversions Conversions.
 	 * This conversion will extract object's nodes using conversions. On this step
 	 * only pathes that mentioned in conversion object, pathes under which processing is performing
 	 * will go to the output structure.
 	 * @param {object} oConfig Configuration object.
 	 * @param {object} oConfig.customTypes Specifies custom types for conversions.
 	 */
-	function UDC(vModificationConversions, vExtractionConversions, oConfig) {
-		return new ConverterObject(vModificationConversions, vExtractionConversions, oConfig);
+	function UDC(aModificationConversions, aExtractionConversions, oConfig) {
+		return new ConverterObject(aModificationConversions, aExtractionConversions, oConfig);
 	};
 
-	function ConverterObject(vModificationConversions, vExtractionConversions, oConfig) {
-		this._modifications = this._finilazeConversions(vModificationConversions);
-		this._extractions = this._finilazeConversions(vExtractionConversions);
+	function ConverterObject(aModificationConversions, aExtractionConversions, oConfig) {
+		this._modifications = this._finilazeConversions(aModificationConversions);
+		this._extractions = this._finilazeConversions(aExtractionConversions);
 		this._config = oConfig;
 	};
 
-	ConverterObject.prototype._finilazeConversions = function (vConversions) {
-		//wrap single conversion, sinle pass to set of passes
-		var aConversions = utils.wrapInArrayIfNot(vConversions || []);
-		//wrap single conversion objects to array (to single pass)
-		aConversions = aConversions.map(function (vPass) { return utils.wrapInArrayIfNot(vPass); });
+	ConverterObject.prototype._finilazeConversions = function (aConversions) {
+		aConversions = aConversions || [];
 		//wrap inPath to array and precompile inPathes to RegExp objects
 		aConversions.forEach(function (aPass) {
 			aPass.forEach(function (oConversion) {
@@ -87,7 +84,7 @@
 				var oConversion = aPass[i];
 				that._forEachMatchedPath(oConversion, sPath, function (sMatchedPath) {
 					if(oConversion.delete) {
-						delete vVal[sKey];
+						utils.removeByPath(oData, sPath);
 					} else {
 						var oArgsObject = new ArgsObject(sPath, vVal);
 						var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
@@ -137,7 +134,25 @@
 	};
 
 	ConverterObject.prototype._applyExtractionConversions = function (oData) {
+		this._applyExtractionPass(oData, this._extractions[0]);
+		for(var i = 1, len = this._extractions.length; i < len; i++) {
+			this._applyExtractionPass(this._result, this._extractions[i]);
+		}
+	};
 
+	ConverterObject.prototype._applyExtractionPass = function (oData, aPass) {
+		var that = this;
+		utils.objectWalkInDeep(oData, function (sPath, vVal, sKey) {
+			for(var i = 0, len = aPass.length; i < len; i++) {
+				var oConversion = aPass[i];
+				that._forEachMatchedPath(oConversion, sPath, function (sMatchedPath) {
+					var oArgsObject = new ArgsObject(sPath, vVal);
+					var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
+					var vOutValue = oConversion.outValue(oArgsObject);
+					utils.setValByPath(that._result, sOutPath, vOutValue);
+				});
+			}
+		});
 	};
 
 	window.UDC = UDC;

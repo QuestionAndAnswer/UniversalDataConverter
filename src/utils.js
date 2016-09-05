@@ -145,9 +145,23 @@
 			var sPathParts = module.truncatePath(true, sPath);
 			var oCurrentObject = oObject;
 			for(var i = 0, len = sPathParts.length - 1; i < len; i++) {
+				if(!oCurrentObject[sPathParts[i]]) {
+					oCurrentObject[sPathParts[i]] = {};
+				}
 				oCurrentObject = oCurrentObject[sPathParts[i]];
 			}
 			oCurrentObject[module.getLast(sPathParts)] = vVal;
+
+			return oObject;
+		},
+
+		removeByPath: function (oObject, sPath, iFrom, iTo) {
+			var sPathParts = module.truncatePath(true, sPath, iFrom, iTo);
+			var oCurrentObject = oObject;
+			for(var i = 0, len = sPathParts.length - 1; i < len; i++) {
+				oCurrentObject = oCurrentObject[sPathParts[i]];
+			}
+			delete oCurrentObject[sPathParts[i]];
 
 			return oObject;
 		},
@@ -165,7 +179,7 @@
 		 */
 		objectWalkInDeep: function (oObject, fnCallback, sUpperPath) {
 			var aKeys, sKey, vVal, sFullPath, i, len;
-			if(jQuery.type(oObject) !== "object") {
+			if(typeof oObject !== "object") {
 				return ;
 			}
 

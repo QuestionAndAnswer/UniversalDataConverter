@@ -275,73 +275,75 @@
 		var aModificationPass = [
 			{
 				//extract data from all results fields, and put it directly to parent
-				inPath: "(.*[A-z0-9]*)/results/([0-9]+)",
+				inPath: "(.*[A-z0-9]*)/results$",
 				//in inPath regex matching groups can be used. They will be applyed to
 				//out path if needed.
-				outPath: "$1/$2"
+				outPath: "$1"
 			},
 			{
 				//remove all __metadata fields
-				inPath: "__metadata",
+				inPath: "__metadata$",
 				delete: true
 			}
 		];
 
-		var oWriteSettingsPass = {
-			//write settings to all ClauseItem by getting this settings from clause
-			inPath: "(/ClauseHeaders/[0-9]+)/UpperItems/[0-9]+",
-			outValue: function (oArgs) {
-				var oClause = utils.getValByPath(oArgs.data, oArgs.matchedGroups[0]);
-				var oClauseItem = oArgs.item;
-				oClauseItem.Settings = oClause.Settings;
-				return oClauseItem;
+		var aWriteSettingsPass = [
+			{
+				//write settings to all ClauseItem by getting this settings from clause
+				inPath: "(/ClauseHeaders/[0-9]+)/UpperItems/[0-9]+$",
+				outValue: function (oArgs) {
+					var oClause = utils.getValByPath(oArgs.data, oArgs.matchedGroups[0]);
+					var oClauseItem = oArgs.item;
+					oClauseItem.Settings = oClause.Settings;
+					return oClauseItem;
+				}
 			}
-		}
+		];
 
 		var aExtractionPass = [
 			{
 				//convert all properties in CustomFields that contains Over string
-				inPath: "/CustomFields/[A-z]*Over",
+				inPath: "/CustomFields/[A-z]*Over$",
 				outValue: function (vVal) { return vVal.toString(); }
 			},
 			{
 				//direct copy all other fields that don't have Over substring in name
-				inPath: "/CustomFields/(?![A-z]*Over).*"
+				inPath: "/CustomFields/(?![A-z]*Over).*$"
 			},
 			{
 				//general data collection to separate clause
 				//using this syntax, all pathes will be matched through or operation
 				//it means that outPath and outValue callbacks will be triggered
 				//if at least on path has been matched
-				inPath: ["/Amount", "/One", "/Scope", "/Title"],
+				inPath: ["/Amount$", "/One$", "/Scope$", "/Title$"],
 				outPath: function (oArgs) { return "/GeneralData" + oArgs.path; }
 			},
 			{
 				//extract clauses and write them by they ids. Simillar to indexBy operation
-				inPath: /\/ClauseHeaders\/[0-9]+\//g,
+				inPath: /\/ClauseHeaders\/[0-9]+$/g,
 				outPath: function (oArgs) {
 					return "/" + oReplacementTable[oArgs.item.ClauseId]; //write in destination root
 				},
 				outValue: function (oArgs) {
 					switch(oArgs.item.ClauseId) {
 						case "0001":
-							return UDC(null, {
+							return UDC([], [[{
 								//grouping by ClassType and EntityType
-								inPath: "/UpperItems/[0-9]+",
+								inPath: "/UpperItems/[0-9]+$",
 								outPath: function (oArgs) { return "/" + oArgs.item.ClassType + "/" + oArgs.item.EntityType; },
 								extend: {
 									RIMAC: { CREDI: {}, KREG: {}, INGOO: {}},
 									CP: { CREDI: {}, KREG: {}, INGOO: {}},
 									RP: { CREDI: {}, KREG: {}, INGOO: {}},
 								}
-							}).convert(oItem);
+							}]]).convert(oArgs.item);
 							break;
 						case "0002":
-							return UDC(null, {
-								inPath: "/UpperItems/[0-9]+",
+							return UDC([], [[{
+								inPath: "/UpperItems/[0-9]+$",
 								outPath: function (oArgs) { return "/" + oArgs.item.RiskType; },
 								extend: { POLIT: {}, POLILLICT: {}, COMDOM: {}, COMCROS: {} }
-							}).convert(oItem);
+							}]]).convert(oArgs.item);
 							break;
 						default:
 							return oArgs.item;
@@ -350,7 +352,7 @@
 			}
 		];
 
-		var oResult = UDC([aModificationPass, oWriteSettingsPass], aExtractionPass).convert(oData);
+		var oResult = UDC([aModificationPass, aWriteSettingsPass], [aExtractionPass]).convert(oData);
 		assert.ok(false, JSON.stringify(oResult));
 	});
 })();
