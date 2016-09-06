@@ -91,15 +91,6 @@
 	                        Value: "Value",
 	                    }, {
 	                        __metadata: {},
-	                        GUID: "10293A1234451H6FFF881235325",
-	                        GUID00: "1lASDJH58KJHASDNMN784N",
-	                        ClauseId: "0001",
-	                        ClassType: "RP",
-	                        EntityType: "CREDI",
-	                        Description: "Description",
-	                        Value: "Value",
-	                    }, {
-	                        __metadata: {},
 	                        GUID: "10293A12341FFDSF8879AAS5325",
 	                        GUID00: "1lASDJH58KJHASDNMN784N",
 	                        ClauseId: "0001",
@@ -293,12 +284,14 @@
 		var aExtractionPass = [
 			{
 				//convert all properties in CustomFields that contains Over string
-				inPath: "/CustomFields/[A-z]*Over$",
-				outValue: function (vVal) { return vVal.toString(); }
+				inPath: "/CustomFields/[A-z]*Over",
+				outValue: function (oArgs) {
+					return oArgs.item.toString();
+				}
 			},
 			{
 				//direct copy all other fields that don't have Over substring in name
-				inPath: "/CustomFields/(?![A-z]*Over).*$"
+				inPath: "/CustomFields/(?![A-z]*Over).*"
 			},
 			{
 				//general data collection to separate clause
@@ -306,7 +299,9 @@
 				//it means that outPath and outValue callbacks will be triggered
 				//if at least on path has been matched
 				inPath: ["/Amount$", "/One$", "/Scope$", "/Title$"],
-				outPath: function (oArgs) { return "/GeneralData" + oArgs.path; }
+				outPath: function (oArgs) {
+					return "/GeneralData" + oArgs.path;
+				}
 			},
 			{
 				//extract clauses and write them by they ids. Simillar to indexBy operation
@@ -315,25 +310,32 @@
 					return "/" + oReplacementTable[oArgs.item.ClauseId]; //write in destination root
 				},
 				outValue: function (oArgs) {
+					var oResult = {};
 					switch(oArgs.item.ClauseId) {
 						case "0001":
-							return UDC([], [[{
-								//grouping by ClassType and EntityType
-								inPath: "/UpperItems/[0-9]+$",
-								outPath: function (oArgs) { return "/" + oArgs.item.ClassType + "/" + oArgs.item.EntityType; },
-								extend: {
-									RIMAC: { CREDI: {}, KREG: {}, INGOO: {}},
-									CP: { CREDI: {}, KREG: {}, INGOO: {}},
-									RP: { CREDI: {}, KREG: {}, INGOO: {}},
-								}
-							}]]).convert(oArgs.item);
+							oResult = UDC([], [[
+								UDC.conversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
+									.extend({ extendWith: { GUID: "" } })
+							]]).convert(oArgs.item);
+
+							return jQuery.extend(true, {
+								RIMAC: { CREDI: {}, KREG: {}, INGOO: {}},
+								CP: { CREDI: {}, KREG: {}, INGOO: {}},
+								RP: { CREDI: {}, KREG: {}, INGOO: {}},
+							}, oResult);
 							break;
 						case "0002":
-							return UDC([], [[{
-								inPath: "/UpperItems/[0-9]+$",
-								outPath: function (oArgs) { return "/" + oArgs.item.RiskType; },
-								extend: { POLIT: {}, POLILLICT: {}, COMDOM: {}, COMCROS: {} }
-							}]]).convert(oArgs.item);
+							oResult = UDC([], [[
+								UDC.conversions.IndexBy("/UpperItems", "/", "RiskType")
+									.extend({ extendWith: { GUID: "" } })
+							]]).convert(oArgs.item)
+
+							return jQuery.extend(true, {
+								POLIT: {},
+								POLILLICT: {},
+								COMDOM: {},
+								COMCROS: {}
+							}, oResult);
 							break;
 						default:
 							return oArgs.item;
@@ -343,6 +345,6 @@
 		];
 
 		var oResult = UDC([aModificationPass, aWriteSettingsPass], [aExtractionPass]).convert(oData);
-		assert.ok(false, JSON.stringify(oResult));
+		assert.deepEqual(oResult, {});
 	});
 })();

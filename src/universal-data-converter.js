@@ -3,9 +3,42 @@
 		this.path = sPath;
 		this.item = vItem;
 		this.matchedGroups = null;
-	};
+	}
 
 	ArgsObject.prototype.data = {};
+
+	function Conversion(oPattern) {
+		this.inPath = oPattern.inPath;
+		this.delete = oPattern.delete;
+		this.outPath = oPattern.outPath;
+		this.outValue = oPattern.outValue;
+		this.extendWith = oPattern.extendWith;
+		this._toInternalTypes();
+	}
+
+	Conversion.prototype._toInternalTypes = function () {
+		//wrap single path into array
+		var aInPath = utils.wrapInArrayIfNot(this.inPath);
+		//regexp conversion. Precomiling regexp, perfomance optimization
+		aInPath = aInPath.map(function (vPath) {
+			return jQuery.type(vPath) === "regexp" ? vPath : new RegExp(vPath);
+		});
+		this.inPath = aInPath;
+		//provide default outPath function if empty
+		this.outPath = this.outPath || function (oArgs) { return oArgs.path; };
+		//provide default outValue function if empty
+		this.outValue = this.outValue || function (oArgs) { return oArgs.item; };
+	};
+
+	Conversion.prototype.extend = function (oPattern) {
+		this.inPath = oPattern.inPath || this.inPath;
+		this.delete = oPattern.delete || this.delete;
+		this.outPath = oPattern.outPath || this.outPath;
+		this.outValue =  oPattern.outValue || this.outValue;
+		this.extendWith = oPattern.extendWith || this.extendWith;
+		this._toInternalTypes();
+		return this;
+	};
 
 	/**
 	 * Converter maker
@@ -22,33 +55,28 @@
 	 */
 	function UDC(aModificationConversions, aExtractionConversions, oConfig) {
 		return new ConverterObject(aModificationConversions, aExtractionConversions, oConfig);
-	};
+	}
 
+	/**
+	 * ConverObject class. Internal class for convertion performing
+	 * @param {array} aModificationConversions Modification conversions
+	 * @param {array} aExtractionConversions Extraction conversions
+	 * @param {object} oConfig Configuration object
+	 */
 	function ConverterObject(aModificationConversions, aExtractionConversions, oConfig) {
-		this._modifications = this._finilazeConversions(aModificationConversions);
-		this._extractions = this._finilazeConversions(aExtractionConversions);
+		this._modifications = this._toInternalTypes(aModificationConversions);
+		this._extractions = this._toInternalTypes(aExtractionConversions);
 		this._config = oConfig;
-	};
+	}
 
-	ConverterObject.prototype._finilazeConversions = function (aConversions) {
+	ConverterObject.prototype._toInternalTypes = function (aConversions) {
 		aConversions = aConversions || [];
 		//wrap inPath to array and precompile inPathes to RegExp objects
-		aConversions.forEach(function (aPass) {
-			aPass.forEach(function (oConversion) {
-				//wrap single path into array
-				var aInPath = utils.wrapInArrayIfNot(oConversion.inPath);
-				//regexp conversion. Precomiling regexp, perfomance optimization
-				aInPath = aInPath.map(function (vPath) {
-					return jQuery.type(vPath) === "regexp" ? vPath : new RegExp(vPath);
-				});
-				oConversion.inPath = aInPath;
-				//provide default outPath function if empty
-				oConversion.outPath = oConversion.outPath || function (oArgs) { return oArgs.path; };
-				//provide default outValue function if empty
-				oConversion.outValue = oConversion.outValue || function (oArgs) { return oArgs.item; };
+		return aConversions.map(function (aPass) {
+			return aPass.map(function (oConversion) {
+				return new Conversion(oConversion);
 			});
 		});
-		return aConversions;
 	};
 
 	/**
@@ -59,9 +87,7 @@
 	 * @return {object}  Output structure
 	 */
 	ConverterObject.prototype.convert = function (oData) {
-		ArgsObject.prototype.data = oData; //sharing current working data copy
 		this._applyModificationConversions(oData);
-		this._result = {};
 		this._applyExtractionConversions(oData);
 		return this._result;
 	};
@@ -71,6 +97,7 @@
 	 * @param  {object} oData Data object
 	 */
 	ConverterObject.prototype._applyModificationConversions = function (oData) {
+		ArgsObject.prototype.data = oData; //sharing current working data copy
 		for(var i = 0, len = this._modifications.length; i < len; i++) {
 			this._applyModificationPass(oData, this._modifications[i]);
 		}
@@ -87,7 +114,7 @@
 					} else {
 						var oArgsObject = new ArgsObject(sPath, vVal);
 						var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
-						var vOutValue = oConversion.outValue(oArgsObject);
+						var vOutValue = that._getOutValue(oConversion, oArgsObject);
 						utils.setValByPath(oData, sOutPath, vOutValue);
 					}
 				});
@@ -133,10 +160,12 @@
 	};
 
 	ConverterObject.prototype._applyExtractionConversions = function (oData) {
-		this._applyExtractionPass(oData, this._extractions[0]);
-		ArgsObject.prototype.data = this._result; //sharing current working data copy
-		for(var i = 1, len = this._extractions.length; i < len; i++) {
-			this._applyExtractionPass(this._result, this._extractions[i]);
+		this._result = oData;
+		for(var i = 0, len = this._extractions.length; i < len; i++) {
+			oCurrentData = this._result; //save previouse step processing result as next step input data
+			ArgsObject.prototype.data = oCurrentData; //share for next step input data
+			this._result = {}; //init new data processing container
+			this._applyExtractionPass(oCurrentData, this._extractions[i]);
 		}
 	};
 
@@ -148,39 +177,79 @@
 				that._forEachMatchedPath(oConversion, sPath, function (sMatchedPath) {
 					var oArgsObject = new ArgsObject(sPath, vVal);
 					var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
-					var vOutValue = oConversion.outValue(oArgsObject);
+					var vOutValue = that._getOutValue(oConversion, oArgsObject);
 					utils.setValByPath(that._result, sOutPath, vOutValue);
 				});
 			}
 		});
 	};
 
+	/**
+	 * Get out value using conversion object. If conversion has extend property, then
+	 * this outputvalue will be extended with this extension object. Usefull when
+	 * there is a need in default value with direct conversion
+	 * @param {object} oConversion Conversion object
+	 * @param {ArgsObject} oArgsObject Arguments object
+	 * @return {any}  Out value
+	 */
+	ConverterObject.prototype._getOutValue = function (oConversion, oArgsObject) {
+		var vOutValue = oConversion.outValue(oArgsObject);
+		if(oConversion.extendWith) {
+			return jQuery.extend(true, {}, oConversion.extendWith, vOutValue);
+		} else {
+			return vOutValue;
+		}
+	};
+
+	/**
+	 * Contains set of default common conversions
+	 * @namespace UDC.conversions
+	 */
 	UDC.conversions = {
 		/**
 		 * delete all matched sPath properties from object
 		 * @param  {string|regexp} sPath Regexp to find path
-		 * @return {object}  Conversion object
+		 * @return {Conversion}  Conversion object
 		 */
 		DeleteMatchedFields: function (sPath) {
-			return {
+			return new Conversion({
 				inPath: sPath,
 				delete: true
-			};
+			});
 		},
 		/**
 		 * //extract data from all sFieldName fields, and put them directly to theirs parents
-		 * @param {string} sFieldName     field name
-		 * @param {object} oToExtend Additional conversion parameters if needed
-		 * @return {object}  Conversion object
+		 * @param {string} sFieldName field name
+		 * @return {Conversion}  Conversion object
 		 */
-		MoveToParent: function (sFieldName, oToExtend) {
-			return jQuery.extend(true, {
+		MoveToParent: function (sFieldName) {
+			return new Conversion({
 				//extract data from all results fields, and put it directly to parent
 				inPath: "(.*[A-z0-9]*)/" + sFieldName + "$",
 				//in inPath regex matching groups can be used. They will be applyed to
 				//out path if needed.
 				outPath: "$1"
-			}, oToExtend);
+			});
+		},
+
+		/**
+		 * [IndexBy description]
+		 * @param {string} sPathToArray Path to array
+		 * @param {string} sBaseOutPath Base output path
+		 * @param {array|string} vFieldNamesToIndexBy Fields name for indexing
+		 * @return {Conversion}  Conversion object
+		 */
+		IndexBy: function (sPathToArray, sBaseOutPath, vFieldNamesToIndexBy) {
+			var aFieldNamesToIndexBy = utils.wrapInArrayIfNot(vFieldNamesToIndexBy);
+			var aOutPath = sBaseOutPath === "/" ? "" : sBaseOutPath;
+			return new Conversion({
+				inPath: sPathToArray + "/[0-9]+$",
+				outPath: function (oArgs) {
+					return sBaseOutPath + aFieldNamesToIndexBy.map(function (sFieldName) {
+						return "/" + oArgs.item[sFieldName];
+					});
+				}
+			});
 		}
 	};
 
