@@ -273,18 +273,8 @@
 		};
 
 		var aModificationPass = [
-			{
-				//extract data from all results fields, and put it directly to parent
-				inPath: "(.*[A-z0-9]*)/results$",
-				//in inPath regex matching groups can be used. They will be applyed to
-				//out path if needed.
-				outPath: "$1"
-			},
-			{
-				//remove all __metadata fields
-				inPath: "__metadata$",
-				delete: true
-			}
+			UDC.conversions.MoveToParent("results"),
+			UDC.conversions.DeleteMatchedFields("__metadata$")
 		];
 
 		var aWriteSettingsPass = [

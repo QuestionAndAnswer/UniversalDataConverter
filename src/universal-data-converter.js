@@ -62,7 +62,6 @@
 		ArgsObject.prototype.data = oData; //sharing current working data copy
 		this._applyModificationConversions(oData);
 		this._result = {};
-		ArgsObject.prototype.data = this._result; //sharing current working data copy
 		this._applyExtractionConversions(oData);
 		return this._result;
 	};
@@ -135,6 +134,7 @@
 
 	ConverterObject.prototype._applyExtractionConversions = function (oData) {
 		this._applyExtractionPass(oData, this._extractions[0]);
+		ArgsObject.prototype.data = this._result; //sharing current working data copy
 		for(var i = 1, len = this._extractions.length; i < len; i++) {
 			this._applyExtractionPass(this._result, this._extractions[i]);
 		}
@@ -153,6 +153,35 @@
 				});
 			}
 		});
+	};
+
+	UDC.conversions = {
+		/**
+		 * delete all matched sPath properties from object
+		 * @param  {string|regexp} sPath Regexp to find path
+		 * @return {object}  Conversion object
+		 */
+		DeleteMatchedFields: function (sPath) {
+			return {
+				inPath: sPath,
+				delete: true
+			};
+		},
+		/**
+		 * //extract data from all sFieldName fields, and put them directly to theirs parents
+		 * @param {string} sFieldName     field name
+		 * @param {object} oToExtend Additional conversion parameters if needed
+		 * @return {object}  Conversion object
+		 */
+		MoveToParent: function (sFieldName, oToExtend) {
+			return jQuery.extend(true, {
+				//extract data from all results fields, and put it directly to parent
+				inPath: "(.*[A-z0-9]*)/" + sFieldName + "$",
+				//in inPath regex matching groups can be used. They will be applyed to
+				//out path if needed.
+				outPath: "$1"
+			}, oToExtend);
+		}
 	};
 
 	window.UDC = UDC;
