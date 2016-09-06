@@ -298,10 +298,8 @@
 				//using this syntax, all pathes will be matched through or operation
 				//it means that outPath and outValue callbacks will be triggered
 				//if at least on path has been matched
-				inPath: ["/Amount$", "/One$", "/Scope$", "/Title$"],
-				outPath: function (oArgs) {
-					return "/GeneralData" + oArgs.path;
-				}
+				inPath: ["(/Amount$)", "(/One$)", "(/Scope$)", "(/Title$)"],
+				outPath: "/GeneralData/$1"
 			},
 			{
 				//extract clauses and write them by they ids. Simillar to indexBy operation
