@@ -299,7 +299,7 @@
 				//it means that outPath and outValue callbacks will be triggered
 				//if at least on path has been matched
 				inPath: ["(/Amount$)", "(/One$)", "(/Scope$)", "(/Title$)"],
-				outPath: "/GeneralData/$1"
+				outPath: "/GeneralData$1"
 			},
 			{
 				//extract clauses and write them by they ids. Simillar to indexBy operation
@@ -311,29 +311,29 @@
 					var oResult = {};
 					switch(oArgs.item.ClauseId) {
 						case "0001":
-							oResult = UDC([], [[
-								UDC.conversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
-									.extend({ extendWith: { GUID: "" } })
-							]]).convert(oArgs.item);
-
-							return jQuery.extend(true, {
-								RIMAC: { CREDI: {}, KREG: {}, INGOO: {}},
-								CP: { CREDI: {}, KREG: {}, INGOO: {}},
-								RP: { CREDI: {}, KREG: {}, INGOO: {}},
-							}, oResult);
+							return UDC()
+								.ext(UDC.conversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
+													.extend({ extendWith: { GUID: "" } })
+								)
+								.default({
+									RIMAC: { CREDI: {}, KREG: {}, INGOO: {}},
+									CP: { CREDI: {}, KREG: {}, INGOO: {}},
+									RP: { CREDI: {}, KREG: {}, INGOO: {}},
+								})
+								.convert(oArgs.item);
 							break;
 						case "0002":
-							oResult = UDC([], [[
-								UDC.conversions.IndexBy("/UpperItems", "/", "RiskType")
-									.extend({ extendWith: { GUID: "" } })
-							]]).convert(oArgs.item)
-
-							return jQuery.extend(true, {
-								POLIT: {},
-								POLILLICT: {},
-								COMDOM: {},
-								COMCROS: {}
-							}, oResult);
+							return UDC()
+								.ext(UDC.conversions.IndexBy("/UpperItems", "/", "RiskType")
+													.extend({ extendWith: { GUID: "" } })
+								)
+								.default({
+									POLIT: {},
+									POLILLICT: {},
+									COMDOM: {},
+									COMCROS: {}
+								})
+								.convert(oArgs.item);
 							break;
 						default:
 							return oArgs.item;
@@ -342,7 +342,11 @@
 			}
 		];
 
-		var oResult = UDC([aModificationPass, aWriteSettingsPass], [aExtractionPass]).convert(oData);
+		var oResult = UDC()
+			.mod([aModificationPass, aWriteSettingsPass])
+			.ext(aExtractionPass)
+			.convert(oData);
+
 		assert.deepEqual(oResult, {});
 	});
 })();

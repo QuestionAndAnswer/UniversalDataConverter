@@ -1,75 +1,97 @@
 (function() {
-	function ArgsObject(sPath, vItem) {
-		this.path = sPath;
-		this.item = vItem;
-		this.matchedGroups = null;
-	}
-
-	ArgsObject.prototype.data = {};
-
-	function Conversion(oPattern) {
-		this.inPath = oPattern.inPath;
-		this.delete = oPattern.delete;
-		this.outPath = oPattern.outPath;
-		this.outValue = oPattern.outValue;
-		this.extendWith = oPattern.extendWith;
-		this._toInternalTypes();
-	}
-
-	Conversion.prototype._toInternalTypes = function () {
-		//wrap single path into array
-		var aInPath = utils.wrapInArrayIfNot(this.inPath);
-		//regexp conversion. Precomiling regexp, perfomance optimization
-		aInPath = aInPath.map(function (vPath) {
-			return jQuery.type(vPath) === "regexp" ? vPath : new RegExp(vPath);
-		});
-		this.inPath = aInPath;
-		//provide default outPath function if empty
-		this.outPath = this.outPath || function (oArgs) { return oArgs.path; };
-		//provide default outValue function if empty
-		this.outValue = this.outValue || function (oArgs) { return oArgs.item; };
-	};
-
-	Conversion.prototype.extend = function (oPattern) {
-		this.inPath = oPattern.inPath || this.inPath;
-		this.delete = oPattern.delete || this.delete;
-		this.outPath = oPattern.outPath || this.outPath;
-		this.outValue =  oPattern.outValue || this.outValue;
-		this.extendWith = oPattern.extendWith || this.extendWith;
-		this._toInternalTypes();
-		return this;
-	};
-
 	/**
 	 * Converter maker
-	 * @param {array} aModificationConversions Conversions.
-	 * This conversion will modify passed object's structure. On this step
-	 * only modification under passed object is performed. All not mentioned in Conversions
-	 * pathes will be transfered to output object untouched.
-	 * @param {array} aExtractionConversions Conversions.
-	 * This conversion will extract object's nodes using conversions. On this step
-	 * only pathes that mentioned in conversion object, pathes under which processing is performing
-	 * will go to the output structure.
-	 * @param {object} oConfig Configuration object.
-	 * @param {object} oConfig.customTypes Specifies custom types for conversions.
 	 */
-	function UDC(aModificationConversions, aExtractionConversions, oConfig) {
-		return new ConverterObject(aModificationConversions, aExtractionConversions, oConfig);
+	function UDC() {
+		return new ConverterObject();
 	}
 
 	/**
 	 * ConverObject class. Internal class for convertion performing
-	 * @param {array} aModificationConversions Modification conversions
-	 * @param {array} aExtractionConversions Extraction conversions
-	 * @param {object} oConfig Configuration object
 	 */
-	function ConverterObject(aModificationConversions, aExtractionConversions, oConfig) {
-		this._modifications = this._toInternalTypes(aModificationConversions);
-		this._extractions = this._toInternalTypes(aExtractionConversions);
-		this._config = oConfig;
+	function ConverterObject() {
+		this._modifications = [];
+		this._extractions = [];
+		this._config = {};
+		this._default;
 	}
 
-	ConverterObject.prototype._toInternalTypes = function (aConversions) {
+	/**
+	 * Set modification conversions
+	 * @param {array} aModificationConversions Conversions.
+	 * This conversion will modify passed object's structure. On this step
+	 * only modification under passed object is performed. All not mentioned in Conversions
+	 * pathes will be transfered to output object untouched.
+	 * @return {ConverterObject}  This converter object instance
+	 */
+	ConverterObject.prototype.mod = function (aModificationConversions) {
+		this._modifications = this._toInternalTypes(aModificationConversions || []);
+		return this;
+	};
+
+	/**
+	 * Set extraction conversions
+	 * @param {array} aExtractionConversions Conversions.
+	 * This conversion will extract object's nodes using conversions. On this step
+	 * only pathes that mentioned in conversion object, pathes under which processing is performing
+	 * will go to the output structure.
+	 * @return {ConverterObject}  This converter object instance
+	 */
+	ConverterObject.prototype.ext = function (aExtractionConversions) {
+		this._extractions = this._toInternalTypes(aExtractionConversions || []);
+		return this;
+	};
+
+	/**
+	 * Set configuration options
+	 * @param {object} oConfig Configuration object.
+	 * @return {ConverterObject}  This converter object instance
+	 */
+	ConverterObject.prototype.config = function (oConfig) {
+		this._config = oConfig;
+		return this;
+	};
+
+	/**
+	 * Set default output structure. This object will be used after last
+	 * conversion to achive default structure. Default value will be applyed
+	 * in all cases. If only modification conversions passed, then default
+	 * will be merged with result of modification conversions. If only
+	 * extraction conversions passed, then default will be merged with
+	 * result of extraction conversions. If both types of conversions were passed,
+	 * then default will be merged with result of full conversion pipeline
+	 * (after modification and extraction conversions).
+	 * @example
+	 * UDC()
+	 *   .ext({ inPath: "/FieldOne" })
+	 *   .default({ FieldOne: {}, FieldTwo: ""})
+	 *   .convert({ FieldOne: 123 });
+	 *   //result will be { FieldOne: 123, FieldTwo: ""};
+	 * @return {ConverterObject}  This converter object instance
+	 */
+	ConverterObject.prototype.default = function (oDefault) {
+		this._default = this._default || oDefault;
+		return this;
+	};
+
+
+	ConverterObject.prototype._toInternalTypes = function (vConversions) {
+		var aConversions,
+			sRootType = jQuery.type(vConversions),
+			sInnerType = jQuery.type(vConversions[0]);
+
+		if(sRootType === "object") {
+			aConversions = [[vConversions]];
+		} else if(sRootType === "array" && sInnerType === "object") {
+			aConversions = [vConversions];
+		} else if(sRootType === "array" && sInnerType === "array"){
+			aConversions = vConversions;
+		} else {
+			throw new Error("UDC: Conversion might be passed as array of passes [[{}, ..., {}], [{}, ..., {}]]," +
+				"as array of conversions like single pass [{}, ..., {}], or as object like single conversion {}." +
+				"Check that you passing correct values");
+		}
+
 		aConversions = aConversions || [];
 		//wrap inPath to array and precompile inPathes to RegExp objects
 		return aConversions.map(function (aPass) {
@@ -89,7 +111,12 @@
 	ConverterObject.prototype.convert = function (oData) {
 		this._applyModificationConversions(oData);
 		this._applyExtractionConversions(oData);
-		return this._result;
+		//optimization
+		if(this._default) {
+			return jQuery.extend(true, {}, this._default, this._result);
+		} else {
+			return this._result;
+		}
 	};
 
 	/**
@@ -113,7 +140,7 @@
 						utils.removeByPath(oData, sPath);
 					} else {
 						var oArgsObject = new ArgsObject(sPath, vVal);
-						var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
+						var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, sMatchedPath, oArgsObject);
 						var vOutValue = that._getOutValue(oConversion, oArgsObject);
 						utils.setValByPath(oData, sOutPath, vOutValue);
 					}
@@ -141,9 +168,9 @@
 	 * @param {number} iIndex Matched path index in inPath property of Conversion object
 	 */
 
-	ConverterObject.prototype._getOutPathAndMatchedGroups = function (oConversion, sPath, oArgsObject) {
+	ConverterObject.prototype._getOutPathAndMatchedGroups = function (oConversion, sPath, sMatchedPath, oArgsObject) {
 		if(jQuery.isFunction(oConversion.outPath)) {
-			sPath.replace(oConversion.inPath[0], function () {
+			sPath.replace(sMatchedPath, function () {
 				//capture matchedGroups
 				if(arguments.length > 3) {
 					oArgsObject.matchedGroups = [];
@@ -155,7 +182,7 @@
 			});
 			return oConversion.outPath(oArgsObject);
 		} else {
-			return sPath.replace(oConversion.inPath[0], oConversion.outPath);
+			return sPath.replace(sMatchedPath, oConversion.outPath);
 		}
 	};
 
@@ -176,7 +203,7 @@
 				var oConversion = aPass[i];
 				that._forEachMatchedPath(oConversion, sPath, function (sMatchedPath) {
 					var oArgsObject = new ArgsObject(sPath, vVal);
-					var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, oArgsObject);
+					var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, sMatchedPath, oArgsObject);
 					var vOutValue = that._getOutValue(oConversion, oArgsObject);
 					utils.setValByPath(that._result, sOutPath, vOutValue);
 				});
@@ -198,58 +225,6 @@
 			return jQuery.extend(true, {}, oConversion.extendWith, vOutValue);
 		} else {
 			return vOutValue;
-		}
-	};
-
-	/**
-	 * Contains set of default common conversions
-	 * @namespace UDC.conversions
-	 */
-	UDC.conversions = {
-		/**
-		 * delete all matched sPath properties from object
-		 * @param  {string|regexp} sPath Regexp to find path
-		 * @return {Conversion}  Conversion object
-		 */
-		DeleteMatchedFields: function (sPath) {
-			return new Conversion({
-				inPath: sPath,
-				delete: true
-			});
-		},
-		/**
-		 * //extract data from all sFieldName fields, and put them directly to theirs parents
-		 * @param {string} sFieldName field name
-		 * @return {Conversion}  Conversion object
-		 */
-		MoveToParent: function (sFieldName) {
-			return new Conversion({
-				//extract data from all results fields, and put it directly to parent
-				inPath: "(.*[A-z0-9]*)/" + sFieldName + "$",
-				//in inPath regex matching groups can be used. They will be applyed to
-				//out path if needed.
-				outPath: "$1"
-			});
-		},
-
-		/**
-		 * [IndexBy description]
-		 * @param {string} sPathToArray Path to array
-		 * @param {string} sBaseOutPath Base output path
-		 * @param {array|string} vFieldNamesToIndexBy Fields name for indexing
-		 * @return {Conversion}  Conversion object
-		 */
-		IndexBy: function (sPathToArray, sBaseOutPath, vFieldNamesToIndexBy) {
-			var aFieldNamesToIndexBy = utils.wrapInArrayIfNot(vFieldNamesToIndexBy);
-			var aOutPath = sBaseOutPath === "/" ? "" : sBaseOutPath;
-			return new Conversion({
-				inPath: sPathToArray + "/[0-9]+$",
-				outPath: function (oArgs) {
-					return sBaseOutPath + aFieldNamesToIndexBy.map(function (sFieldName) {
-						return "/" + oArgs.item[sFieldName];
-					});
-				}
-			});
 		}
 	};
 
