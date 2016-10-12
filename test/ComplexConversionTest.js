@@ -1,5 +1,9 @@
-(function () {
-	QUnit.module("Complex-conversion module");
+define([
+	"UniversalDataConverter/UniversalDataConverter",
+	"UniversalDataConverter/CommonConversions",
+	"UniversalDataConverter/utils"
+], function (UDC, CommonConversions, utils) {
+	QUnit.module("Complex conversion module");
 
 	QUnit.test("Real data complex conversion 1", function (assert) {
 		var oData = {
@@ -264,8 +268,8 @@
 		};
 
 		var aModificationPass = [
-			UDC.conversions.MoveToParent("results"),
-			UDC.conversions.DeleteMatchedFields("__metadata$")
+			CommonConversions.MoveToParent("results"),
+			CommonConversions.DeleteMatchedFields("__metadata$")
 		];
 
 		var aWriteSettingsPass = [
@@ -312,7 +316,7 @@
 					switch(oArgs.item.ClauseId) {
 						case "0001":
 							return UDC()
-								.ext(UDC.conversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
+								.ext(CommonConversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
 													.extend({ extendWith: { GUID: "" } })
 								)
 								.default({
@@ -324,7 +328,7 @@
 							break;
 						case "0002":
 							return UDC()
-								.ext(UDC.conversions.IndexBy("/UpperItems", "/", "RiskType")
+								.ext(CommonConversions.IndexBy("/UpperItems", "/", "RiskType")
 													.extend({ extendWith: { GUID: "" } })
 								)
 								.default({
@@ -349,4 +353,4 @@
 
 		assert.deepEqual(oResult, {});
 	});
-})();
+});

@@ -1,9 +1,12 @@
-(function () {
+define([
+	"UniversalDataConverter/Conversion",
+	"UniversalDataConverter/utils"
+], function (Conversion, utils) {
 	/**
 	 * Contains set of default common conversions
-	 * @namespace UDC.conversions
+	 * @namespace UniversalDataConverter.conversions
 	 */
-	UDC.conversions = {
+	 return {
 		/**
 		 * delete all matched sPath properties from object
 		 * @param  {string|regexp} sPath Regexp to find path
@@ -50,4 +53,4 @@
 			});
 		}
 	};
-})();
+});

@@ -1,7 +1,9 @@
-(function () {
+define([
+	"UniversalDataConverter/utils"
+], function (utils) {
 	/**
 	 * Conversion object. Used mostly internally.
-	 * @class UDC.Conversion
+	 * @class UniversalDataConverter.Conversion
 	 * @param {object} oPattern Conversion object pattern
 	 */
 	function Conversion(oPattern) {
@@ -27,6 +29,14 @@
 		this.outValue = this.outValue || function (oArgs) { return oArgs.item; };
 	};
 
+	/**
+	 * Extend conversion with additional properties.
+	 * If property with the same name was passed and it's equal undefined
+	 * then old assigned value will be used.
+	 * @method extend
+	 * @param {object} oPattern Conversion pattern object
+	 * @return {UniversalDataConverter.Conversion}  Conversion object instance
+	 */
 	Conversion.prototype.extend = function (oPattern) {
 		this.inPath = oPattern.inPath || this.inPath;
 		this.delete = oPattern.delete || this.delete;
@@ -37,5 +47,5 @@
 		return this;
 	};
 
-	window.Conversion = Conversion;
-})();
+	return Conversion;
+});

@@ -1,6 +1,8 @@
-(function() {
+define([
+	"UniversalDataConverter/utils"
+], function(utils) {
 	QUnit.module("Utils");
-	
+
     QUnit.test("indexBy", function(assert) {
         var aIn1 = [{
             "GUID": "1"
@@ -178,4 +180,4 @@
         });
         assert.deepEqual(oResult, oExpected);
     });
-})();
+});

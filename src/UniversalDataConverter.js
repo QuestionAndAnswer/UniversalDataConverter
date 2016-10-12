@@ -1,4 +1,8 @@
-(function() {
+define([
+	"UniversalDataConverter/Conversion",
+	"UniversalDataConverter/ArgsObject",
+	"UniversalDataConverter/utils"
+], function(Conversion, ArgsObject, utils) {
 	/**
 	 * Converter maker
 	 */
@@ -228,5 +232,5 @@
 		}
 	};
 
-	window.UDC = UDC;
-})();
+	return UDC;
+});

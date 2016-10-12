@@ -1,4 +1,6 @@
-(function () {
+define([
+
+], function () {
 	var module = {
 		/**
 		 * Index items by key. Use this in case if keys are unique.
@@ -214,5 +216,5 @@
 		}
 	};
 
-	window.utils = module;
-})();
+	return module;
+});
