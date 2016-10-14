@@ -65,7 +65,7 @@ define([
 					var oResult = {};
 					switch(oArgs.item.ClauseId) {
 						case "0001":
-							return UDC()
+							return new UDC.Converter()
 								.ext(CommonConversions.IndexBy("/UpperItems", "/", ["ClassType", "EntityType"])
 													.extend({ extendWith: { GUID: "" } })
 								)
@@ -77,7 +77,7 @@ define([
 								.convert(oArgs.item);
 							break;
 						case "0002":
-							return UDC()
+							return new UDC.Converter()
 								.ext(CommonConversions.IndexBy("/UpperItems", "/", "RiskType")
 													.extend({ extendWith: { GUID: "" } })
 								)
@@ -96,7 +96,7 @@ define([
 			}
 		];
 
-		var oResult = UDC()
+		var oResult = new UDC.Converter()
 			.mod([aModificationPass, aWriteSettingsPass])
 			.ext(aExtractionPass)
 			.convert(oData);

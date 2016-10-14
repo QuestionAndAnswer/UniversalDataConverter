@@ -213,6 +213,27 @@ define([
 		  */
 		wrapInArrayIfNot: function (vVal) {
 			return jQuery.isArray(vVal) ? vVal : [vVal];
+		},
+
+		/**
+		 * Returns matched params from string with regexp comparsion
+		 * @param {string} sStr String to test
+		 * @param {string|regex} vPattern Regexp expression in which matching groups may be presented
+		 * @return {array}  Array of matched groups values. Values placed in array
+		 * in order same is they presented in pattern
+		 */
+		getMatchedGroups: function (sStr, vPattern) {
+			var matchedGroups = [];
+			sStr.replace(vPattern, function () {
+				//capture matchedGroups
+				if(arguments.length > 3) {
+					for(var i = 1, len = arguments.length - 2; i < len; i++) {
+						matchedGroups.push(arguments[i]);
+					}
+				}
+				return "";
+			});
+			return matchedGroups;
 		}
 	};
 

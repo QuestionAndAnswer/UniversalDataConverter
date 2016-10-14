@@ -1,15 +1,9 @@
 define([
 	"UniversalDataConverter/Conversion",
 	"UniversalDataConverter/ArgsObject",
-	"UniversalDataConverter/utils"
-], function(Conversion, ArgsObject, utils) {
-	/**
-	 * Converter maker
-	 */
-	function UDC() {
-		return new ConverterObject();
-	}
-
+	"UniversalDataConverter/utils",
+	"UniversalDataConverter/RulesProcessor"
+], function(Conversion, ArgsObject, utils, RulesProcessor) {
 	/**
 	 * ConverObject class. Internal class for convertion performing
 	 */
@@ -174,16 +168,7 @@ define([
 
 	ConverterObject.prototype._getOutPathAndMatchedGroups = function (oConversion, sPath, sMatchedPath, oArgsObject) {
 		if(jQuery.isFunction(oConversion.outPath)) {
-			sPath.replace(sMatchedPath, function () {
-				//capture matchedGroups
-				if(arguments.length > 3) {
-					oArgsObject.matchedGroups = [];
-					for(var i = 1, len = arguments.length - 2; i < len; i++) {
-						oArgsObject.matchedGroups.push(arguments[i]);
-					}
-				}
-				return "";
-			});
+			oArgsObject.matchedGroups = utils.getMatchedGroups(sPath, sMatchedPath);
 			return oConversion.outPath(oArgsObject);
 		} else {
 			return sPath.replace(sMatchedPath, oConversion.outPath);
@@ -232,5 +217,8 @@ define([
 		}
 	};
 
-	return UDC;
+	return {
+		Converter: ConverterObject,
+		RulesProcessor: RulesProcessor
+	};
 });
