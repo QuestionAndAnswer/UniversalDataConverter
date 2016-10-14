@@ -4,37 +4,42 @@ define([
 	QUnit.module("RulesProcessor");
 
 	QUnit.test("RulesProcessor", function (assert) {
-		assert.expect(7);
-
-		var oNumsDone = assert.async(2);
-		var oStringsDone = assert.async();
-		var oNumsStringsDone = assert.async(4);
+		var iNumsCount = 0;
+		var iStringsCount = 0;
+		var iNumsStringsCount = 0;
 
 		var oProcessor = new RulesProcessor([
 			{
 				pattern: /^[0-9]+$/g,
 				action: function (oArgs) {
 					assert.ok("Nums done");
-					oNumsDone();
+					iNumsCount++;
+					
+					return parseInt(oArgs.word);
 				}
 			},
 			{
 				pattern: "^[A-z]+$",
 				action: function (oArgs) {
 					assert.ok("Strings done");
-					oStringsDone();
+					iStringsCount++;
 				}
 			},
 			{
 				pattern: "^[A-z0-9]+$",
 				action: function (oArgs) {
 					assert.ok("NumsStrings done");
-					oNumsStringsDone();
+					iNumsStringsCount++;
 				}
 			}
 		]);
 
 		oProcessor.callMatched(["123", "asdasd", "11asd"]);
-		oProcessor.callMatched("123");
+		var aResult = oProcessor.callMatched("123");
+
+		assert.equal(iNumsCount, 2, "Nums call times correct");
+		assert.equal(iStringsCount, 1, "Strings call times correct");
+		assert.equal(iNumsStringsCount, 4, "NumsStrings call times correct");
+		assert.deepEqual(aResult, [123], "Returned data are good");
 	});
 });
