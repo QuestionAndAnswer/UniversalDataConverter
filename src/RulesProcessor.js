@@ -7,13 +7,15 @@ define([
 			oRule.pattern = new RegExp(oRule.pattern);
 			oRule.action = oRule.action || function () {};
 		});
-	};
+	}
 
 	/**
 	 * Iterates through words and applies actions according rules
-	 * @param {string} aWords Array of words to process
+	 * @param {string|array} aWords Array of words to process
 	 */
-	RulesProcessor.prototype.callMatched = function (aWords) {
+	RulesProcessor.prototype.callMatched = function (vWords) {
+		var aWords = utils.wrapInArrayIfNot(vWords);
+
 		var that = this;
 		aWords.forEach(function (sWord) {
 			that._rules.forEach(function (oRule) {
@@ -21,7 +23,7 @@ define([
 					oRule.action({
 						rule: oRule,
 						word: sWord,
-						matchedGroups: utils.getMatchedGroups(sWord, oRule.pattern),
+						matchedGroups: utils.getMatchedGroups(sWord, oRule.pattern)
 					});
 				}
 			});

@@ -4,11 +4,11 @@ define([
 	QUnit.module("RulesProcessor");
 
 	QUnit.test("RulesProcessor", function (assert) {
-		assert.expect(5);
+		assert.expect(7);
 
-		var oNumsDone = assert.async();
+		var oNumsDone = assert.async(2);
 		var oStringsDone = assert.async();
-		var oNumsStringsDone = assert.async(3);
+		var oNumsStringsDone = assert.async(4);
 
 		var oProcessor = new RulesProcessor([
 			{
@@ -35,5 +35,6 @@ define([
 		]);
 
 		oProcessor.callMatched(["123", "asdasd", "11asd"]);
+		oProcessor.callMatched("123");
 	});
 });
