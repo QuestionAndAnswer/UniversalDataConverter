@@ -3,7 +3,7 @@ define([
 ], function (RulesProcessor) {
 	QUnit.module("RulesProcessor");
 
-	QUnit.test("RulesProcessor", function (assert) {
+	QUnit.test("RulesProcessor calls tests", function (assert) {
 		var iNumsCount = 0;
 		var iStringsCount = 0;
 		var iNumsStringsCount = 0;
@@ -11,35 +11,57 @@ define([
 		var oProcessor = new RulesProcessor([
 			{
 				pattern: /^[0-9]+$/g,
-				action: function (oArgs) {
-					assert.ok("Nums done");
+				action: function () {
+					assert.ok(true, "Nums call");
 					iNumsCount++;
-					
-					return parseInt(oArgs.word);
 				}
 			},
 			{
 				pattern: "^[A-z]+$",
-				action: function (oArgs) {
-					assert.ok("Strings done");
+				action: function () {
+					assert.ok(true, "Strings call");
 					iStringsCount++;
 				}
 			},
 			{
 				pattern: "^[A-z0-9]+$",
-				action: function (oArgs) {
-					assert.ok("NumsStrings done");
+				action: function () {
+					assert.ok(true, "NumsStrings call");
 					iNumsStringsCount++;
 				}
 			}
 		]);
 
 		oProcessor.callMatched(["123", "asdasd", "11asd"]);
-		var aResult = oProcessor.callMatched("123");
 
-		assert.equal(iNumsCount, 2, "Nums call times correct");
-		assert.equal(iStringsCount, 1, "Strings call times correct");
-		assert.equal(iNumsStringsCount, 4, "NumsStrings call times correct");
-		assert.deepEqual(aResult, [123], "Returned data are good");
+		assert.equal(iNumsCount, 1, "Nums call times");
+		assert.equal(iStringsCount, 1, "Strings call times");
+		assert.equal(iNumsStringsCount, 3, "NumsStrings call times");
+	});
+
+	QUnit.test("params tests", function (assert) {
+		var oProcessor = new RulesProcessor([
+			{
+				pattern: /^([0-9]+)$/g,
+				action: function (oArgs, iNum) {
+					return parseInt(oArgs.matchedGroups[0]) + iNum;
+				}
+			},
+			{
+				pattern: "^[A-z]+$",
+				action: function () {
+					return "9";
+				}
+			},
+			{
+				pattern: "(^[A-z0-9]+$)",
+				action: function (oArgs, iNum) {
+					return oArgs.matchedGroups[0] + iNum.toString();
+				}
+			}
+		]);
+
+		var aResult = oProcessor.callMatched(["123", "asdasd", "11asd"], 1);
+		assert.deepEqual(aResult, [124, "1231", "9", "asdasd1", "11asd1"], "Returned values");
 	});
 });

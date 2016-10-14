@@ -1,0 +1,30 @@
+{
+    "env": {
+        "browser": true
+    },
+    "extends": "eslint:recommended",
+	"globals": {
+		"define": true,
+		"require": true,
+		"jQuery": true,
+		"QUnit": true
+	},
+    "rules": {
+        "indent": [
+            "error",
+            "tab"
+        ],
+        "linebreak-style": [
+            "error",
+            "windows"
+        ],
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ]
+    }
+}
