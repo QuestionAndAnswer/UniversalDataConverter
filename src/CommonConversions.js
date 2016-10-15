@@ -6,7 +6,7 @@ define([
 	 * Contains set of default common conversions
 	 * @namespace UniversalDataConverter.conversions
 	 */
-	 return {
+	return {
 		/**
 		 * delete all matched sPath properties from object
 		 * @param  {string|regexp} sPath Regexp to find path
@@ -42,7 +42,6 @@ define([
 		 */
 		IndexBy: function (sPathToArray, sBaseOutPath, vFieldNamesToIndexBy) {
 			var aFieldNamesToIndexBy = utils.wrapInArrayIfNot(vFieldNamesToIndexBy);
-			var aOutPath = sBaseOutPath === "/" ? "" : sBaseOutPath;
 			return new Conversion({
 				inPath: sPathToArray + "/[0-9]+$",
 				outPath: function (oArgs) {
