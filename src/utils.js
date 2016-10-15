@@ -206,11 +206,11 @@ define([
 		 * @param {string} sKey Current key
 		 */
 
-		 /**
-		  * Wrap array into array if this value not array already.
-		  * @param  {any} vVal Value to wrap
-		  * @return {array}  Value wrapped into array
-		  */
+		/**
+		 * Wrap array into array if this value not array already.
+		 * @param  {any} vVal Value to wrap
+		 * @return {array}  Value wrapped into array
+		 */
 		wrapInArrayIfNot: function (vVal) {
 			return jQuery.isArray(vVal) ? vVal : [vVal];
 		},
