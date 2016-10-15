@@ -53,7 +53,7 @@ define([
 		if(!vConversions) {
 			return [];
 		}
-		
+
 		var aConversions,
 			sRootType = jQuery.type(vConversions),
 			sInnerType = jQuery.type(vConversions[0]);
@@ -89,28 +89,12 @@ define([
 	 */
 	DataConverter.prototype._getModificationProcessor = function(aConversions) {
 		var that = this;
-
-		return aConversions.map(function(aPass) {
-			return new RulesProcessor(aPass.map(function(oConversion) {
-				return {
-					pattern: oConversion.inPath,
-					action: function(oArgs, oParams) {
-						var oData = oParams.data;
-						var vVal = oParams.value;
-						var sPath = oArgs.word;
-						var sMatchedPath = oArgs.pattern;
-
-						if (oConversion.delete) {
-							utils.removeByPath(oData, sPath);
-						} else {
-							var oArgsObject = new ArgsObject(sPath, vVal);
-							var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, sMatchedPath, oArgsObject);
-							var vOutValue = that._getOutValue(oConversion, oArgsObject);
-							utils.setValByPath(oData, sOutPath, vOutValue);
-						}
-					}
-				};
-			}));
+		return this._mapToProcessors(aConversions, function (oArgs, oParams, oConversion) {
+			if (oConversion.delete) {
+				utils.removeByPath(oParams.data, oArgs.word);
+			} else {
+				that._applyCommonConversion(oConversion, oArgs.word, oParams.value, oArgs.pattern, oParams.data);
+			}
 		});
 	};
 
@@ -122,24 +106,29 @@ define([
 	 */
 	DataConverter.prototype._getExtractionProcessor = function(aConversions) {
 		var that = this;
+		return this._mapToProcessors(aConversions, function (oArgs, oParams, oConversion) {
+			that._applyCommonConversion(oConversion, oArgs.word, oParams.value, oArgs.pattern, that._result);
+		});
+	};
 
+	DataConverter.prototype._mapToProcessors = function (aConversions, fnAction) {
 		return aConversions.map(function(aPass) {
-			return new RulesProcessor(aPass.map(function(oConversion) {
+			return new RulesProcessor(aPass.map(function (oConversion) {
 				return {
 					pattern: oConversion.inPath,
-					action: function(oArgs, oParams) {
-						var vVal = oParams.value;
-						var sPath = oArgs.word;
-						var sMatchedPath = oArgs.pattern;
-
-						var oArgsObject = new ArgsObject(sPath, vVal);
-						var sOutPath = that._getOutPathAndMatchedGroups(oConversion, sPath, sMatchedPath, oArgsObject);
-						var vOutValue = that._getOutValue(oConversion, oArgsObject);
-						utils.setValByPath(that._result, sOutPath, vOutValue);
+					action: function (oArgs, oParams) {
+						fnAction(oArgs, oParams, oConversion);
 					}
 				};
 			}));
 		});
+	};
+
+	DataConverter.prototype._applyCommonConversion = function (oConversion, sCurrentPath, vObjectOnPath, sMatchedPattern, oToSetObject) {
+		var oArgsObject = new ArgsObject(sCurrentPath, vObjectOnPath);
+		var sOutPath = this._getOutPathAndMatchedGroups(oConversion, sCurrentPath, sMatchedPattern, oArgsObject);
+		var vOutValue = this._getOutValue(oConversion, oArgsObject);
+		utils.setValByPath(oToSetObject, sOutPath, vOutValue);
 	};
 
 	/**
@@ -167,14 +156,7 @@ define([
 	DataConverter.prototype._applyModifications = function(oData) {
 		ArgsObject.prototype.data = oData; //sharing current working data copy
 		for (var i = 0, convLen = this._modificationsProcessor.length; i < convLen; i++) {
-			var aPass = this._modificationsProcessor[i];
-
-			utils.objectWalkInDeep(oData, function(sPath, vVal) {
-				aPass.callMatched(sPath, {
-					data: oData,
-					value: vVal
-				});
-			});
+			this._applyPass(oData, this._modificationsProcessor[i]);
 		}
 	};
 
@@ -182,18 +164,21 @@ define([
 		this._result = oData;
 		ArgsObject.prototype.data = oData; //sharing current working data copy
 		for (var i = 0, convLen = this._extractionsProcessor.length; i < convLen; i++) {
-			var aPass = this._extractionsProcessor[i];
 			var oCurrentData = this._result; //save previouse step processing result as next step input data
 			ArgsObject.prototype.data = oCurrentData; //share for next step input data
 			this._result = {}; //init new data processing container
 
-			utils.objectWalkInDeep(oData, function(sPath, vVal) {
-				aPass.callMatched(sPath, {
-					data: oData,
-					value: vVal
-				});
-			});
+			this._applyPass(oCurrentData, this._extractionsProcessor[i]);
 		}
+	};
+
+	DataConverter.prototype._applyPass = function (oData, aPass) {
+		utils.objectWalkInDeep(oData, function(sPath, vVal) {
+			aPass.callMatched(sPath, {
+				data: oData,
+				value: vVal
+			});
+		});
 	};
 
 	DataConverter.prototype._getOutPathAndMatchedGroups = function (oConversion, sPath, sMatchedPath, oArgsObject) {
