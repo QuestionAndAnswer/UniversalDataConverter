@@ -4,7 +4,9 @@ define([
 	function RulesProcessor(aRules) {
 		this._rules = aRules;
 		this._rules.forEach(function (oRule) {
-			oRule.pattern = new RegExp(oRule.pattern);
+			oRule.patterns = utils.wrapInArrayIfNot(oRule.pattern).map(function (oPattern) {
+				return new RegExp(oPattern);
+			});
 			oRule.action = oRule.action || function () {};
 		});
 	}
@@ -23,17 +25,22 @@ define([
 		var that = this;
 		aWords.forEach(function (sWord) {
 			that._rules.forEach(function (oRule) {
-				if(oRule.pattern.test(sWord)) {
-					var oArgs = {
-						rule: oRule,
-						word: sWord,
-						matchedGroups: utils.getMatchedGroups(sWord, oRule.pattern)
-					};
+				for(var i = 0; i < oRule.patterns.length; i++) {
+					var oPattern = oRule.patterns[i];
+					if(oPattern.test(sWord)) {
+						var oArgs = {
+							rule: oRule,
+							word: sWord,
+							pattern: oPattern,
+							matchedGroups: utils.getMatchedGroups(sWord, oPattern)
+						};
 
-					var vActionResult = oRule.action(oArgs, vAdditionalData);
+						var vActionResult = oRule.action(oArgs, vAdditionalData);
 
-					if(vActionResult !== undefined) {
-						oResult.push(vActionResult);
+						if(vActionResult !== undefined) {
+							oResult.push(vActionResult);
+						}
+						break;
 					}
 				}
 			});

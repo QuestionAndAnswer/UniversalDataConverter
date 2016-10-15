@@ -42,7 +42,7 @@ define([
 	QUnit.test("params tests", function (assert) {
 		var oProcessor = new RulesProcessor([
 			{
-				pattern: /^([0-9]+)$/g,
+				pattern: [/^([0-9]+)$/g],
 				action: function (oArgs, iNum) {
 					return parseInt(oArgs.matchedGroups[0]) + iNum;
 				}
