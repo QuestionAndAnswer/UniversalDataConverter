@@ -1,10 +1,10 @@
 define([
 	"UniversalDataConverter/CommonConversions",
 	"UniversalDataConverter/utils",
-	"test/ComplexConversionTestsData",
+	"test/DataConverterData",
 	"UniversalDataConverter/DataConverter"
 ], function(CommonConversions, utils, TestsData, DataConverter) {
-	QUnit.module("Complex conversion module");
+	QUnit.module("DataConverter");
 
 	QUnit.test("Real data complex conversion 1", function(assert) {
 		var oData = TestsData[0];
