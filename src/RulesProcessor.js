@@ -39,24 +39,29 @@ define([
 
 	/**
 	 * Remove rule
+	 * @param {object|string} vRule Rule to delete. If string passed,
+	 * then search will be performed by name field of rule. If object
+	 * passed, then search will be performed by object. If nothing were
+	 * oassed as argument, nothing will be deleted
 	 */
-	RulesProcessor.prototype.removeRule = function (oRule) {
-		var iIndex = this._rules.indexOf(oRule);
-		if(iIndex !== -1) {
-			this._rules.splice(iIndex, 1);
+	RulesProcessor.prototype.removeRule = function (vRule) {
+		if(!vRule) {
+			return;
 		}
-	};
 
-	/**
-	 * Remove rule by name. If name filed presented in rule object
-	 * then this matched object will be removed from rules list.
-	 * If rule with such name was not find, nothing will be removed
-	 */
-	RulesProcessor.prototype.removeRuleByName = function (sName) {
-		for(var i = 0, len = this._rules.length; i < len; i++) {
-			if(this._rules[i].name === sName) {
-				this._rules.splice(i, 1);
-				break;
+		if(typeof vRule === "object") {
+			var oRule = vRule;
+			var iIndex = this._rules.indexOf(oRule);
+			if(iIndex !== -1) {
+				this._rules.splice(iIndex, 1);
+			}
+		} else {
+			var sName = vRule;
+			for(var i = 0, len = this._rules.length; i < len; i++) {
+				if(this._rules[i].name === sName) {
+					this._rules.splice(i, 1);
+					break;
+				}
 			}
 		}
 	};

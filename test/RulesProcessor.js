@@ -93,12 +93,10 @@ define([
 		oProcessor.removeRule(oRule2);
 		assert.deepEqual(oProcessor.callMatched(["1", "2"]), ["Rule1"], "After Rule2 remove only Rule1 called");
 
-		oProcessor.removeRuleByName("Rule1");
+		oProcessor.removeRule("Rule1");
 		assert.deepEqual(oProcessor.callMatched(["1", "2"]), [], "After Rule1 remove by name nothing were called");
 
 		oProcessor.removeRule();
 		assert.ok(true, "Empty removeRule call not thrown exception");
-		oProcessor.removeRuleByName();
-		assert.ok(true, "Empty removeRuleByName call not thrown exception");
 	});
 });
