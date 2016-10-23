@@ -64,4 +64,41 @@ define([
 		var aResult = oProcessor.callMatched(["123", "asdasd", "11asd"], 1);
 		assert.deepEqual(aResult, [124, "1231", "9", "asdasd1", "11asd1"], "Returned values");
 	});
+
+	QUnit.test("addRule, removeRule, removeByName", function (assert) {
+		var oProcessor = new RulesProcessor();
+		assert.ok(true, "Empty RulesProcessor createion not thrown exception");
+
+		oProcessor.addRule();
+		assert.ok(true, "Empty rule adding not thrown exception");
+
+		oProcessor.addRule({
+			name: "Rule1",
+			pattern: "1",
+			action: function (oArgs) {
+				return oArgs.rule.name;
+			}
+		});
+
+		var oRule2 = {
+			name: "Rule2",
+			pattern: "2",
+			action: function (oArgs) {
+				return oArgs.rule.name;
+			}
+		};
+		oProcessor.addRule(oRule2);
+		assert.deepEqual(oProcessor.callMatched(["1", "2"]), ["Rule1", "Rule2"], "Added rules has been called");
+
+		oProcessor.removeRule(oRule2);
+		assert.deepEqual(oProcessor.callMatched(["1", "2"]), ["Rule1"], "After Rule2 remove only Rule1 called");
+
+		oProcessor.removeRuleByName("Rule1");
+		assert.deepEqual(oProcessor.callMatched(["1", "2"]), [], "After Rule1 remove by name nothing were called");
+
+		oProcessor.removeRule();
+		assert.ok(true, "Empty removeRule call not thrown exception");
+		oProcessor.removeRuleByName();
+		assert.ok(true, "Empty removeRuleByName call not thrown exception");
+	});
 });
