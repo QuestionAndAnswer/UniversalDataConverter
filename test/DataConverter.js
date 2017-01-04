@@ -110,4 +110,23 @@ define([
 
 		assert.deepEqual(oResult, oExpected);
 	});
+
+	QUnit.test("Filterring", function (assert) {
+		var oResult = new DataConverter({
+			extractions: [
+				{
+					inPath: ".*",
+					filter: function (oArgs) {
+						return parseInt(utils.getPathPart(oArgs.path, -1), 10) != utils.getValByPath(oArgs.item, oArgs.path);
+					}
+				}
+			]
+		}).convert({
+			"1": 1,
+			"2": 3,
+			"3": 3
+		});
+
+		assert.deepEqual(oResult, { "1": 1, "3": 3 });
+	});
 });
