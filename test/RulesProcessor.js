@@ -99,4 +99,25 @@ define([
 		oProcessor.removeRule();
 		assert.ok(true, "Empty removeRule call not thrown exception");
 	});
+
+	QUnit.test("call once", function (assert) {
+		var oProcessor = new RulesProcessor([
+			{
+				"pattern": "once",
+				"callOnce": true,
+				"action": function () {
+					return 1;
+				},
+			},
+			{
+				"pattern": "multi",
+				"action": function () {
+					return -1;
+				}
+			}
+		]);
+
+		var aResult = oProcessor.callMatched(["once", "multi", "multionce"]);
+		assert.deepEqual(aResult, [1, -1, -1], "called once");
+	});
 });

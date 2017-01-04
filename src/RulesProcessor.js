@@ -76,13 +76,15 @@ define([
 	RulesProcessor.prototype.callMatched = function (vWords, vAdditionalData) {
 		var aWords = utils.wrapInArrayIfNot(vWords);
 		var oResult = [];
+		var aCalledRules = new Array(this._rules.length).map(function () { return false; });
 
 		var that = this;
+
 		aWords.forEach(function (sWord) {
-			that._rules.forEach(function (oRule) {
+			that._rules.forEach(function (oRule, iRuleIndex) {
 				for(var i = 0; i < oRule.patterns.length; i++) {
 					var oPattern = oRule.patterns[i];
-					if(oPattern.test(sWord)) {
+					if(oPattern.test(sWord) && !aCalledRules[iRuleIndex]) {
 						var oArgs = {
 							rule: oRule,
 							word: sWord,
@@ -94,6 +96,10 @@ define([
 
 						if(vActionResult !== undefined) {
 							oResult.push(vActionResult);
+						}
+
+						if(oRule.callOnce) {
+							aCalledRules[iRuleIndex] = true;
 						}
 						break;
 					}
