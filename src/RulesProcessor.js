@@ -25,6 +25,7 @@ define([
 			return new RegExp(oPattern);
 		});
 		oRule.action = oRule.action || function () {};
+		oRule.enabled = oRule.enabed || true;
 		return oRule;
 	};
 
@@ -66,6 +67,51 @@ define([
 		}
 	};
 
+	function find(aList, fnCallback) {
+		for(var i = 0; i < aList.length; i++) {
+			var oObj = aList[i];
+			if(fnCallback(oObj)) {
+				return oObj;
+			}
+		}
+	}
+
+	/**
+	 * Enables all rules
+	 */
+	RulesProcessor.prototype.enableAllRules = function () {
+		this._rules.forEach(function (oRule) { return oRule.enabled = true; });
+	};
+
+	/**
+	 * Disables all rules
+	 */
+	RulesProcessor.prototype.disableAllRules = function () {
+		this._rules.forEach(function (oRule) { return oRule.enabled = false; });
+	};
+
+	/**
+	 * Will add rule in checks chain again
+	 * @param {string} sRuleName Rule name to enable
+	 */
+	RulesProcessor.prototype.enableRule = function (sRuleName) {
+		var oRule = find(this._rules, function (oRule) { return oRule.name === sRuleName; });
+		if(oRule) {
+			oRule.enabled = true;
+		}
+	};
+
+	/**
+	 * Will not remove rule from checks, but will not execute it's action method
+	 * @param {string} sRuleName Rule name to disable
+	 */
+	RulesProcessor.prototype.disableRule = function (sRuleName) {
+		var oRule = find(this._rules, function (oRule) { return oRule.name === sRuleName; });
+		if(oRule) {
+			oRule.enabled = false;
+		}
+	};
+
 	/**
 	 * Iterates through words and applies actions according rules
 	 * @param {string|array} aWords Array of words to process
@@ -82,27 +128,33 @@ define([
 
 		aWords.forEach(function (sWord) {
 			that._rules.forEach(function (oRule, iRuleIndex) {
-				for(var i = 0; i < oRule.patterns.length; i++) {
-					var oPattern = oRule.patterns[i];
-					if(oPattern.test(sWord) && !aCalledRules[iRuleIndex]) {
-						var oArgs = {
-							rule: oRule,
-							word: sWord,
-							pattern: oPattern,
-							matchedGroups: utils.getMatchedGroups(sWord, oPattern)
-						};
+				if(!aCalledRules[iRuleIndex] && oRule.enabled) {
 
-						var vActionResult = oRule.action(oArgs, vAdditionalData);
+					for(var i = 0; i < oRule.patterns.length; i++) {
 
-						if(vActionResult !== undefined) {
-							oResult.push(vActionResult);
+						var oPattern = oRule.patterns[i];
+						if(oPattern.test(sWord)) {
+							var oArgs = {
+								rule: oRule,
+								word: sWord,
+								pattern: oPattern,
+								matchedGroups: utils.getMatchedGroups(sWord, oPattern)
+							};
+
+							var vActionResult = oRule.action(oArgs, vAdditionalData);
+
+							if(vActionResult !== undefined) {
+								oResult.push(vActionResult);
+							}
+
+							if(oRule.callOnce) {
+								aCalledRules[iRuleIndex] = true;
+							}
+							break;
 						}
 
-						if(oRule.callOnce) {
-							aCalledRules[iRuleIndex] = true;
-						}
-						break;
 					}
+
 				}
 			});
 		});

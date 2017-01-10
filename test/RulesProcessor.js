@@ -120,4 +120,37 @@ define([
 		var aResult = oProcessor.callMatched(["once", "multi", "multionce"]);
 		assert.deepEqual(aResult, [1, -1, -1], "called once");
 	});
+
+	QUnit.test("enable/disable rules", function (assert) {
+		var oProcessor = new RulesProcessor([
+			{
+				"name": "First",
+				"pattern": "1",
+				"action": function () {
+					return 1;
+				}
+			},
+			{
+				"name": "Second",
+				"pattern": "2",
+				"action": function () {
+					return 2;
+				}
+			}
+		]);
+
+		var toMatch = ["1", "2"];
+
+		oProcessor.disableRule("Second");
+		assert.deepEqual(oProcessor.callMatched(toMatch), [1], "disableRule");
+
+		oProcessor.enableRule("Second");
+		assert.deepEqual(oProcessor.callMatched(toMatch), [1, 2], "enableRule");
+
+		oProcessor.disableAllRules();
+		assert.deepEqual(oProcessor.callMatched(toMatch), [], "disableAllRules");
+
+		oProcessor.enableAllRules();
+		assert.deepEqual(oProcessor.callMatched(toMatch), [1, 2], "enableAllRules");
+	});
 });
